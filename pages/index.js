@@ -12,7 +12,7 @@ export default function HomePage() {
   const [lengthStringInput, setLengthStringInput] = useState("");
   const [output, setOutput] = useState("");
 
-  const contractAddress = "0x0165878A594ca255338adfa4d48449f69242Eb8F";
+  const contractAddress = "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
   const AssessmentABI = Assessment_abi.abi;
   console.log(AssessmentABI)
   useEffect(() => {
@@ -23,21 +23,21 @@ export default function HomePage() {
         if (accounts.length > 0) {
           setAccount(accounts[0]);
           setWalletConnected(true);
-  
+
           getAssessmentContract(window.ethereum);
         }
       }
     };
-  
+
     getWallet();
   }, []);
-  
+
   const connectAccount = async () => {
     if (!window.ethereum) {
       alert('MetaMask wallet is required to connect');
       return;
     }
-  
+
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     if (accounts.length > 0) {
       setAccount(accounts[0]);
@@ -62,7 +62,7 @@ export default function HomePage() {
     const result = await AssessmentContract.lengthString(lengthStringInput);
     setOutput(`Length of string: ${result}`);
   };
-  
+
   const getAssessmentContract = (provider) => {
     const ethersProvider = new ethers.providers.Web3Provider(provider);
     const signer = ethersProvider.getSigner();
@@ -72,50 +72,55 @@ export default function HomePage() {
 
   console.log(walletConnected)
   return (
-        <div>
-          <h1>Assessment Contract Interface</h1>
-          {!walletConnected ? (
-            <p>Please connect your MetaMask wallet to interact with the contract.</p>
-          ) : (
-            <>
-              <div>
-                <input
-                  type="number"
-                  value={sumInputs.a}
-                  onChange={(e) => setSumInputs({ ...sumInputs, a: parseInt(e.target.value, 10) })}
-                  placeholder="Enter first number"
-                />
-                <input
-                  type="number"
-                  value={sumInputs.b}
-                  onChange={(e) => setSumInputs({ ...sumInputs, b: parseInt(e.target.value, 10) })}
-                  placeholder="Enter second number"
-                />
-                <button onClick={handleSum}>Calculate Sum</button>
-              </div>
-              <div>
-                <input
-                  type="number"
-                  value={isEvenInput}
-                  onChange={(e) => setIsEvenInput(parseInt(e.target.value, 10))}
-                  placeholder="Enter a number"
-                />
-                <button onClick={handleIsEven}>Check If Even</button>
-              </div>
-              <div>
-                <input
-                  type="text"
-                  value={lengthStringInput}
-                  onChange={(e) => setLengthStringInput(e.target.value)}
-                  placeholder="Enter a string"
-                />
-                <button onClick={handleLengthString}>Get String Length</button>
-              </div>
-              <div>
-                <p>Output: {output}</p>
-              </div>
-            </>
-          )}
-        </div>
-      );
+    <div>
+      <h1>Assessment Contract Interface</h1>
+      {walletConnected ? (
+        <p>Connected Account: {account}</p>
+      ) : (
+        <button onClick={connectAccount}>Connect Wallet</button>
+      )}
+      {!walletConnected ? (
+        <p>Please connect your MetaMask wallet to interact with the contract.</p>
+      ) : (
+        <>
+          <div>
+            <input
+              type="number"
+              value={sumInputs.a}
+              onChange={(e) => setSumInputs({ ...sumInputs, a: parseInt(e.target.value, 10) })}
+              placeholder="Enter first number"
+            />
+            <input
+              type="number"
+              value={sumInputs.b}
+              onChange={(e) => setSumInputs({ ...sumInputs, b: parseInt(e.target.value, 10) })}
+              placeholder="Enter second number"
+            />
+            <button onClick={handleSum}>Calculate Sum</button>
+          </div>
+          <div>
+            <input
+              type="number"
+              value={isEvenInput}
+              onChange={(e) => setIsEvenInput(parseInt(e.target.value, 10))}
+              placeholder="Enter a number"
+            />
+            <button onClick={handleIsEven}>Check If Even</button>
+          </div>
+          <div>
+            <input
+              type="text"
+              value={lengthStringInput}
+              onChange={(e) => setLengthStringInput(e.target.value)}
+              placeholder="Enter a string"
+            />
+            <button onClick={handleLengthString}>Get String Length</button>
+          </div>
+          <div>
+            <p>Output: {output}</p>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
