@@ -1,117 +1,121 @@
-import {useState, useEffect} from "react";
-import {ethers} from "ethers";
-import atm_abi from "../artifacts/contracts/Assessment.sol/Assessment.json";
+import { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import Assessment_abi from "../artifacts/contracts/Assessment.sol/Assessment.json";
 
 export default function HomePage() {
   const [ethWallet, setEthWallet] = useState(undefined);
   const [account, setAccount] = useState(undefined);
-  const [atm, setATM] = useState(undefined);
-  const [balance, setBalance] = useState(undefined);
+  const [AssessmentContract, setAssessmentContract] = useState(undefined);
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [sumInputs, setSumInputs] = useState({ a: 0, b: 0 });
+  const [isEvenInput, setIsEvenInput] = useState(0);
+  const [lengthStringInput, setLengthStringInput] = useState("");
+  const [output, setOutput] = useState("");
 
-  const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-  const atmABI = atm_abi.abi;
-
-  const getWallet = async() => {
-    if (window.ethereum) {
-      setEthWallet(window.ethereum);
-    }
-
-    if (ethWallet) {
-      const account = await ethWallet.request({method: "eth_accounts"});
-      handleAccount(account);
-    }
-  }
-
-  const handleAccount = (account) => {
-    if (account) {
-      console.log ("Account connected: ", account);
-      setAccount(account);
-    }
-    else {
-      console.log("No account found");
-    }
-  }
-
-  const connectAccount = async() => {
-    if (!ethWallet) {
+  const contractAddress = "0x0165878A594ca255338adfa4d48449f69242Eb8F";
+  const AssessmentABI = Assessment_abi.abi;
+  console.log(AssessmentABI)
+  useEffect(() => {
+    const getWallet = async () => {
+      if (window.ethereum) {
+        setEthWallet(window.ethereum);
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+          setWalletConnected(true);
+  
+          getAssessmentContract(window.ethereum);
+        }
+      }
+    };
+  
+    getWallet();
+  }, []);
+  
+  const connectAccount = async () => {
+    if (!window.ethereum) {
       alert('MetaMask wallet is required to connect');
       return;
     }
   
-    const accounts = await ethWallet.request({ method: 'eth_requestAccounts' });
-    handleAccount(accounts);
-    
-    // once wallet is set we can get a reference to our deployed contract
-    getATMContract();
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    if (accounts.length > 0) {
+      setAccount(accounts[0]);
+      setWalletConnected(true);
+
+      setEthWallet(window.ethereum);
+      getAssessmentContract(window.ethereum);
+    }
   };
 
-  const getATMContract = () => {
-    const provider = new ethers.providers.Web3Provider(ethWallet);
-    const signer = provider.getSigner();
-    const atmContract = new ethers.Contract(contractAddress, atmABI, signer);
- 
-    setATM(atmContract);
-  }
+  const handleSum = async () => {
+    const result = await AssessmentContract.sum(sumInputs.a, sumInputs.b);
+    setOutput(`Sum: ${result}`);
+  };
 
-  const getBalance = async() => {
-    if (atm) {
-      setBalance((await atm.getBalance()).toNumber());
-    }
-  }
+  const handleIsEven = async () => {
+    const result = await AssessmentContract.isEven(isEvenInput);
+    setOutput(`Is even: ${result}`);
+  };
 
-  const deposit = async() => {
-    if (atm) {
-      let tx = await atm.deposit(1);
-      await tx.wait()
-      getBalance();
-    }
-  }
+  const handleLengthString = async () => {
+    const result = await AssessmentContract.lengthString(lengthStringInput);
+    setOutput(`Length of string: ${result}`);
+  };
+  
+  const getAssessmentContract = (provider) => {
+    const ethersProvider = new ethers.providers.Web3Provider(provider);
+    const signer = ethersProvider.getSigner();
+    const contract = new ethers.Contract(contractAddress, AssessmentABI, signer);
+    setAssessmentContract(contract);
+  };
 
-  const withdraw = async() => {
-    if (atm) {
-      let tx = await atm.withdraw(1);
-      await tx.wait()
-      getBalance();
-    }
-  }
-
-  const initUser = () => {
-    // Check to see if user has Metamask
-    if (!ethWallet) {
-      return <p>Please install Metamask in order to use this ATM.</p>
-    }
-
-    // Check to see if user is connected. If not, connect to their account
-    if (!account) {
-      return <button onClick={connectAccount}>Please connect your Metamask wallet</button>
-    }
-
-    if (balance == undefined) {
-      getBalance();
-    }
-
-    return (
-      <div>
-        <p>Your Account: {account}</p>
-        <p>Your Balance: {balance}</p>
-        <button onClick={deposit}>Deposit 1 ETH</button>
-        <button onClick={withdraw}>Withdraw 1 ETH</button>
-      </div>
-    )
-  }
-
-  useEffect(() => {getWallet();}, []);
-
+  console.log(walletConnected)
   return (
-    <main className="container">
-      <header><h1>Welcome to the Metacrafters ATM!</h1></header>
-      {initUser()}
-      <style jsx>{`
-        .container {
-          text-align: center
-        }
-      `}
-      </style>
-    </main>
-  )
+        <div>
+          <h1>Assessment Contract Interface</h1>
+          {!walletConnected ? (
+            <p>Please connect your MetaMask wallet to interact with the contract.</p>
+          ) : (
+            <>
+              <div>
+                <input
+                  type="number"
+                  value={sumInputs.a}
+                  onChange={(e) => setSumInputs({ ...sumInputs, a: parseInt(e.target.value, 10) })}
+                  placeholder="Enter first number"
+                />
+                <input
+                  type="number"
+                  value={sumInputs.b}
+                  onChange={(e) => setSumInputs({ ...sumInputs, b: parseInt(e.target.value, 10) })}
+                  placeholder="Enter second number"
+                />
+                <button onClick={handleSum}>Calculate Sum</button>
+              </div>
+              <div>
+                <input
+                  type="number"
+                  value={isEvenInput}
+                  onChange={(e) => setIsEvenInput(parseInt(e.target.value, 10))}
+                  placeholder="Enter a number"
+                />
+                <button onClick={handleIsEven}>Check If Even</button>
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={lengthStringInput}
+                  onChange={(e) => setLengthStringInput(e.target.value)}
+                  placeholder="Enter a string"
+                />
+                <button onClick={handleLengthString}>Get String Length</button>
+              </div>
+              <div>
+                <p>Output: {output}</p>
+              </div>
+            </>
+          )}
+        </div>
+      );
 }
